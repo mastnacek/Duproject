@@ -69,3 +69,7 @@ env.yaml
 *.swo
 # Cursor specific files
 .cursor/
+.cursorignore
+
+# Obrázky
+obrazek.png
