@@ -1,14 +1,16 @@
 # Python Project Finder
 
-Aplikace pro vyhledávání a správu Python projektů na disku.
+Aplikace pro vyhledávání a správu Python projektů na disku s moderním grafickým rozhraním postavená na PySide6.
 
 ## Funkce aplikace
 
 - Vyhledávání Python projektů v zadaném adresáři a jeho podsložkách
-- Zobrazení informací o nalezených projektech (cesta, počet souborů, velikost, poslední změna)
+- Zobrazení detailních informací o nalezených projektech (cesta, počet souborů, velikost, poslední změna)
 - Identifikace potenciálně duplicitních projektů na základě podobnosti souborů
 - Export a import seznamu projektů do/z JSON souboru
 - Konfigurace ignorovaných adresářů a přípon souborů
+- Přehledné grafické rozhraní s možností filtrování a řazení projektů
+- Intuitivní nastavení parametrů vyhledávání přes dialogové okno
 
 ## Instalace
 
@@ -40,18 +42,18 @@ pip install -r requirements.txt
 ## Spuštění aplikace
 
 ```bash
-python python_project_finder/main.py
+python main.py
 ```
 
 ## Požadavky
 
 - Python 3.6+
-- PySide6
+- PySide6 >= 6.4.0
 
 ## Struktura projektu
 
 ```
-python_project_finder/
+/
 ├── config.py                # Konfigurační konstanty
 ├── main.py                  # Vstupní bod aplikace
 ├── model/
@@ -75,6 +77,14 @@ python_project_finder/
     ├── __init__.py
     └── json_handler.py      # Práce s JSON soubory
 ```
+
+## Architektura
+
+Aplikace je postavena na architektonickém vzoru MVC (Model-View-Controller):
+
+- **Model** - Obsahuje datovou strukturu a logiku pro vyhledávání a správu projektů
+- **View** - Definuje uživatelské rozhraní a způsob prezentace dat
+- **Controller** - Řídí tok aplikace a propojuje Model a View
 
 ## Licence
 
