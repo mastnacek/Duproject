@@ -1,0 +1,86 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+Pravidla pro vývoj GUI k programu vyhledávání Python projektů
+Obecné požadavky
+Architektura: Striktně MVC (Model-View-Controller)
+Framework GUI: PySide6
+Git: Použití pro verzování kódu (GitHub profil: mastnacek)
+Jednotnost kódu:
+Každý soubor max. 200 řádků
+Řádek max. 100 znaků
+Hlavička v každém souboru s popisem funkcionality
+Dodržování stylu PEP 8
+
+Struktura projektu
+/
+├── config.py                # Konfigurační konstanty
+├── main.py                  # Vstupní bod aplikace
+├── model/
+│   ├── __init__.py
+│   ├── project_model.py     # Datový model projektu
+│   └── finder_model.py      # Logika vyhledávání projektů
+├── view/
+│   ├── __init__.py
+│   ├── main_window.py       # Hlavní okno aplikace
+│   ├── project_list_view.py # Seznam nalezených projektů
+│   ├── settings_dialog.py   # Dialog nastavení
+│   └── help_dialog.py       # Dialog nápovědy
+├── controller/
+│   ├── __init__.py
+│   ├── app_controller.py    # Hlavní controller aplikace
+│   └── finder_controller.py # Controller pro vyhledávání
+├── resources/
+│   ├── icons/               # Ikony aplikace
+│   └── style/               # CSS styly
+└── utils/
+    ├── __init__.py
+    └── json_handler.py      # Práce s JSON soubory
+
+    Funkce GUI aplikace
+Hlavní okno:
+Kontextové menu v horní části (menubar)
+Panel nástrojů s běžnými akcemi
+Oblast pro zobrazení nalezených projektů
+Stavový řádek pro informace o průběhu operací
+Menu:
+Soubor: Vybrat složku, Uložit výsledky, Ukončit
+Nástroje: Vyhledat projekty, Analyzovat duplicity
+Nastavení: Konfigurace aplikace
+Nápověda: O aplikaci, Jak používat
+Funkce:
+Výběr složky pro prohledání
+Zobrazení nalezených projektů v tabulce/stromovém pohledu
+Filtrování a řazení projektů
+Export výsledků do JSON souboru
+Identifikace potenciálních duplicitních projektů
+Konfigurace ignorovaných adresářů a přípony souborů
+
+Dodatečná doporučení
+Lokalizace: Připravit aplikaci pro snadnou lokalizaci (čeština a angličtina)
+Ukládání nastavení: Použít QSettings pro ukládání uživatelských nastavení (poslední použitá složka, apod.)
+Asynchronní zpracování: Pro vyhledávání projektů použít QThread nebo QRunnable, aby GUI nezamrzalo
+Dokumentace: Důkladně komentovat kód a vytvořit uživatelskou dokumentaci
+Testování: Implementovat unit testy pro klíčové části aplikace
+Správa chyb: Robustní zachycení a zpracování výjimek
+Optimalizace výkonu: Efektivní algoritmy pro vyhledávání ve velkých adresářových strukturách
+Způsob vývoje
+Git Workflow:
+Vytvořit nový repozitář na GitHubu (profil: mastnacek)
+Použít feature branch workflow (odděleně vyvíjet nové funkce)
+Pravidelné commity s popisnými zprávami
+Pull requesty pro sloučení nových funkcí do hlavní větve
+Etapy vývoje:
+Vytvoření základní struktury projektu a repozitáře
+Implementace modelové vrstvy (převzetí logiky z simple_finder.py)
+Vytvoření základního GUI a pohledů
+Implementace controllerů
+Testování a ladění
+Optimalizace a dokumentace
+
+
+
+
+

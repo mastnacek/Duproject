@@ -1,0 +1,3 @@
+"""
+Balíček pro ikony aplikace.
+""" 
