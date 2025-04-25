@@ -25,6 +25,9 @@ IGNORED_DIRECTORIES = [
     'thumbnails'
 ]
 
+# Verze aplikace
+APP_VERSION = "1.0.0"
+
 # Přípony souborů, které identifikují Python projekt
 PYTHON_EXTENSIONS = ['.py', '.pyw', '.pyx', '.pyi', '.pyc']
 
@@ -65,9 +68,11 @@ PROJECT_ROOT_FILES = [
 DEFAULT_OUTPUT_FILE = 'python_projects.json'
 
 # Nastavení GUI
-GUI_TITLE = "Python Project Finder"
+GUI_TITLE = "Python Project Finder 💩"
 GUI_WIDTH = 1200
 GUI_HEIGHT = 800
+# Emoji ikona aplikace
+APP_ICON = "💩"
 
 # Názvy sloupců pro tabulku s projekty
 PROJECT_COLUMNS = ["Cesta", "Počet souborů", "Velikost", "Datum"]
@@ -77,11 +82,6 @@ GROUP_COLUMNS = ["Projekt", "Cesta", "Velikost", "Datum", "Podobnost", "Počet s
 
 # Nastavení pro vyhledávání duplicit
 SIMILARITY_THRESHOLD = 0.7  # Práh podobnosti pro označení duplicity 
-
-# Barvy pro zvýraznění
-HIGHLIGHT_COLOR = "#AAFFAA"  # Světle zelená pro zvýraznění
-GROUP_HEADER_COLOR = "#EAEAEA"  # Šedá pro záhlaví skupin
-DUPLICATE_COLOR = "#FFDDAA"  # Oranžová pro duplicity
 
 # Seznam ignorovaných adresářů při výpočtu data poslední změny
 IGNORED_DIRS = [

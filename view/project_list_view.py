@@ -12,7 +12,9 @@ from PySide6.QtCore import Qt, QAbstractTableModel, QModelIndex, QSortFilterProx
 from PySide6.QtGui import QAction, QColor
 import os
 
-from config import PROJECT_COLUMNS, GROUP_COLUMNS, HIGHLIGHT_COLOR, GROUP_HEADER_COLOR, DUPLICATE_COLOR
+from config import PROJECT_COLUMNS, GROUP_COLUMNS
+from resources.style.themes import ThemeManager
+from utils.folder_calculator import calculate_real_folder_sizes, _update_coloring_after_calculation, calculate_folder_hashes, calculate_last_file_modified
 
 
 class ProjectTableModel(QAbstractTableModel):
@@ -186,27 +188,28 @@ class ProjectListView(QWidget):
         self.groups_tree.setContextMenuPolicy(Qt.CustomContextMenu)
         self.groups_tree.customContextMenuRequested.connect(self.show_groups_context_menu)
         
-        # Nastavení vzhledu skupin
+        # Nastavení vzhledu skupin - nyní získáme aktuální barevné schéma z ThemeManager
+        theme = ThemeManager.get_theme(ThemeManager.load_current_theme())
         self.groups_tree.setAlternatingRowColors(True)
         self.groups_tree.setStyleSheet(f"""
             QTreeWidget::item:has-children {{
                 font-weight: bold;
-                background-color: {GROUP_HEADER_COLOR};
+                background-color: {theme["tree_header_background"]};
             }}
             
             /* Zajištění čitelnosti textu při výběru položky */
             QTreeWidget::item:selected {{
-                color: black;  /* Černý text při výběru položky */
-                background-color: rgba(0, 120, 215, 150);  /* Poloprůhledná modrá pro výběr */
+                color: {theme["selected_item_text"]};
+                background-color: {theme["selected_item_background"]};
             }}
             
             /* Zajištění čitelnosti textu při výběru položky skupiny */
             QTreeWidget::item:has-children:selected {{
-                color: black;  /* Černý text při výběru položky skupiny */
-                background-color: rgba(0, 120, 215, 150);  /* Poloprůhledná modrá pro výběr */
+                color: {theme["selected_item_text"]};
+                background-color: {theme["selected_item_background"]};
                 font-weight: bold;
             }}
-        """)  # Použití barvy z konfigurace
+        """)
         
         main_layout.addWidget(self.groups_tree)
         
@@ -289,6 +292,9 @@ class ProjectListView(QWidget):
         Args:
             groups (list): Seznam skupin duplicitních projektů
         """
+        # Získání aktuálního tématu z ThemeManager
+        theme = ThemeManager.get_theme(ThemeManager.load_current_theme())
+        
         self.duplicate_groups = groups
         
         # Vyčistíme strom skupin
@@ -392,22 +398,22 @@ class ProjectListView(QWidget):
                 if hasattr(project, 'folder_hash') and project.folder_hash:
                     # Pokud existují alespoň dva projekty se stejným hashem
                     if project.folder_hash in hash_groups and len(hash_groups[project.folder_hash]) > 1:
-                        project_item.setBackground(hash_column, QColor("#88FF88"))  # Sytější zelená
+                        project_item.setBackground(hash_column, QColor(theme["same_hash_color"]))
                 
                 # Obarvíme buňku s velikostí pro projekty se stejnou skutečnou velikostí
                 if hasattr(project, 'real_size') and project.real_size is not None:
                     if project.real_size in size_groups and len(size_groups[project.real_size]) > 1:
-                        project_item.setBackground(size_column, QColor("#FFDDAA"))  # Světle oranžová
+                        project_item.setBackground(size_column, QColor(theme["same_size_color"]))
                 
                 # Obarvíme buňku s počtem souborů pro projekty se stejným počtem souborů
                 if hasattr(project, 'real_file_count') and project.real_file_count is not None:
                     if project.real_file_count in file_count_groups and len(file_count_groups[project.real_file_count]) > 1:
-                        project_item.setBackground(file_count_column, QColor("#AADDFF"))  # Světle modrá
+                        project_item.setBackground(file_count_column, QColor(theme["same_files_color"]))
                 
                 # Obarvíme buňku s datem poslední změny souboru pro projekty se stejným datem
                 if hasattr(project, 'last_file_modified') and project.last_file_modified is not None:
                     if project.last_file_modified in last_mod_groups and len(last_mod_groups[project.last_file_modified]) > 1:
-                        project_item.setBackground(last_file_mod_column, QColor("#E6CCFF"))  # Světle fialová
+                        project_item.setBackground(last_file_mod_column, QColor(theme["same_date_color"]))
                 
                 # Přidáme datum poslední úpravy souboru
                 try:
@@ -586,22 +592,22 @@ class ProjectListView(QWidget):
             if hasattr(project, 'folder_hash') and project.folder_hash:
                 # Pokud existují alespoň dva projekty se stejným hashem
                 if project.folder_hash in hash_groups and len(hash_groups[project.folder_hash]) > 1:
-                    project_item.setBackground(hash_column, QColor("#88FF88"))  # Sytější zelená
+                    project_item.setBackground(hash_column, QColor(theme["same_hash_color"]))
             
             # Obarvíme buňku s velikostí pro projekty se stejnou skutečnou velikostí
             if hasattr(project, 'real_size') and project.real_size is not None:
                 if project.real_size in size_groups and len(size_groups[project.real_size]) > 1:
-                    project_item.setBackground(size_column, QColor("#FFDDAA"))  # Světle oranžová
+                    project_item.setBackground(size_column, QColor(theme["same_size_color"]))
             
             # Obarvíme buňku s počtem souborů pro projekty se stejným počtem souborů
             if hasattr(project, 'real_file_count') and project.real_file_count is not None:
                 if project.real_file_count in file_count_groups and len(file_count_groups[project.real_file_count]) > 1:
-                    project_item.setBackground(file_count_column, QColor("#AADDFF"))  # Světle modrá
+                    project_item.setBackground(file_count_column, QColor(theme["same_files_color"]))
             
             # Obarvíme buňku s datem poslední změny souboru pro projekty se stejným datem
             if hasattr(project, 'last_file_modified') and project.last_file_modified is not None:
                 if project.last_file_modified in last_mod_groups and len(last_mod_groups[project.last_file_modified]) > 1:
-                    project_item.setBackground(last_file_mod_column, QColor("#E6CCFF"))  # Světle fialová
+                    project_item.setBackground(last_file_mod_column, QColor(theme["same_date_color"]))
             
             # Přidáme datum poslední úpravy souboru
             try:
@@ -686,13 +692,13 @@ class ProjectListView(QWidget):
             
             # Zpracování vybrané akce
             if action == calculate_real_size_action:
-                self.calculate_real_folder_sizes(item)
+                self.calculate_real_folder_sizes_action()
             elif action == calculate_hash_action:
-                self.calculate_folder_hashes(item)
+                self.calculate_folder_hashes_action()
             elif action == calculate_last_mod_action:
-                self.calculate_last_file_modified(item)
+                self.calculate_last_file_modified_action()
             elif action == calculate_all_data_action:
-                self.calculate_all_data(item)
+                self.calculate_all_data_action()
             elif action == sort_by_name_action:
                 self.sort_group(item, 0)
             elif action == sort_by_path_action:
@@ -799,17 +805,17 @@ class ProjectListView(QWidget):
                 projects.append((child_item, project))
         
         # Nejprve vypočítáme skutečné velikosti a počty souborů
-        self.calculate_real_folder_sizes(group_item)
+        calculate_real_folder_sizes(group_item, projects, self.status_label, self._update_coloring_after_calculation)
         
         # Pak vypočítáme hash pro každý projekt
-        self.calculate_folder_hashes(group_item)
+        calculate_folder_hashes(group_item, self.status_label, self._update_coloring_after_calculation)
         
         # Nakonec zjistíme datum poslední změny souboru
-        self.calculate_last_file_modified(group_item)
+        calculate_last_file_modified(group_item, self.status_label)
         
         # Aktualizace informace ve stavovém řádku
         self.status_label.setText(f"Všechny údaje byly vypočítány pro skupinu projektů")
-    
+
     def calculate_all_data_for_project(self, item, project):
         """
         Vypočítá všechny dodatečné údaje pro jeden projekt.
@@ -878,18 +884,28 @@ class ProjectListView(QWidget):
         # Obnovení normálního kurzoru
         QApplication.restoreOverrideCursor()
 
-    def calculate_real_folder_sizes(self, group_item):
+    def calculate_real_folder_sizes_action(self):
         """
-        Vypočítá skutečné velikosti složek a počty souborů pro projekty ve skupině.
-        Zároveň zjistí datum poslední úpravy souboru v projektu.
-        
-        Args:
-            group_item: Položka skupiny ve stromu
+        Akce pro výpočet skutečných velikostí složek pro vybranou skupinu.
+        Tato metoda vyzve k výpočtu skutečných velikostí
+        složek a počtu souborů pro všechny projekty ve vybrané skupině.
         """
-        from PySide6.QtWidgets import QApplication
-        import os
+        # Získáme aktuálně vybranou položku ve stromu
+        selected_items = self.groups_tree.selectedItems()
+        if not selected_items:
+            self.status_label.setText("Vyberte skupinu projektů pro výpočet velikostí složek.")
+            return
         
-        # Získáme všechny projekty ve skupině pro hledání shod
+        # Vybereme první vybranou položku
+        selected_item = selected_items[0]
+        
+        # Pokud je vybrán projekt, vybereme jeho rodiče (skupinu)
+        if selected_item.parent():
+            group_item = selected_item.parent()
+        else:
+            group_item = selected_item
+        
+        # Načteme všechny projekty ve skupině
         projects = []
         for i in range(group_item.childCount()):
             child_item = group_item.child(i)
@@ -897,86 +913,32 @@ class ProjectListView(QWidget):
             if project:
                 projects.append((child_item, project))
         
-        # Indexy sloupců
-        size_column = 2      # Sloupec pro velikost
-        file_count_column = 5  # Sloupec pro počet souborů
-        last_file_mod_column = 7  # Sloupec pro poslední změnu souboru
-        
-        # Pro každý projekt ve skupině
-        for i in range(group_item.childCount()):
-            # Nastavení kurzoru na čekání
-            QApplication.setOverrideCursor(Qt.WaitCursor)
-            
-            child_item = group_item.child(i)
-            project = child_item.data(0, Qt.UserRole)
-            
-            if project and hasattr(project, 'path'):
-                # Výpočet skutečné velikosti složky a počtu souborů
-                try:
-                    total_size = 0
-                    file_count = 0
-                    
-                    # Prochází rekurzivně všechny soubory ve složce (bez filtrování)
-                    for dirpath, dirnames, filenames in os.walk(project.path):
-                        # Přidáme velikosti souborů
-                        for file in filenames:
-                            file_path = os.path.join(dirpath, file)
-                            try:
-                                total_size += os.path.getsize(file_path)
-                                file_count += 1
-                            except (OSError, FileNotFoundError):
-                                pass  # Ignorujeme soubory, ke kterým nemáme přístup
-                    
-                    # Aktualizace dat v tabulce
-                    if total_size >= 1024 * 1024 * 1024:  # Více než 1 GB
-                        size_str = f"{total_size / (1024 * 1024 * 1024):.2f} GB"
-                    elif total_size >= 1024 * 1024:  # Více než 1 MB
-                        size_str = f"{total_size / (1024 * 1024):.2f} MB"
-                    else:  # V KB
-                        size_str = f"{total_size / 1024:.2f} KB"
-                    
-                    # Uložení skutečných hodnot do objektu projektu (pro ukládání do JSON)
-                    project.real_size = total_size
-                    project.real_file_count = file_count
-                    
-                    # Aktualizace dat v tabulce
-                    child_item.setText(size_column, size_str)  # Aktualizace sloupce s velikostí
-                    child_item.setText(file_count_column, str(file_count))  # Nastavení počtu souborů
-                    
-                    # Zjištění poslední změny souboru v projektu
-                    last_file_time = project.get_last_file_modified()
-                    child_item.setText(last_file_mod_column, project.get_formatted_last_file_modified())
-                    
-                    # Aktualizace stavového řádku
-                    self.status_label.setText(f"Načtena skutečná data pro: {project.name}")
-                
-                except Exception as e:
-                    self.status_label.setText(f"Chyba při načítání dat: {str(e)}")
-            
-            # Obnovení normálního kurzoru
-            QApplication.restoreOverrideCursor()
-        
-        # Po výpočtu všech hodnot provedeme obarvení projektů se stejnými hodnotami
-        self._update_coloring_after_calculation(projects)
-        
-        # Aktualizace informace po dokončení
-        self.status_label.setText(f"Skutečná data načtena pro všechny projekty ve skupině")
-        
-        # Signál pro aktualizaci projektů v modelu
-        from controller.app_controller import AppController
-        if hasattr(AppController, 'update_projects_with_real_data'):
-            AppController.update_projects_with_real_data()
-    
-    def calculate_folder_hashes(self, group_item):
+        # Spustíme výpočet skutečných velikostí složek
+        self.status_label.setText("Výpočet skutečných velikostí složek...")
+        calculate_real_folder_sizes(group_item, projects, self.status_label, self._update_coloring_after_calculation)
+        self.status_label.setText("Výpočet velikostí složek dokončen.")
+
+    def calculate_folder_hashes_action(self):
         """
-        Vypočítá hashe obsahu složek pro projekty ve skupině.
-        
-        Args:
-            group_item: Položka skupiny ve stromu
+        Akce pro výpočet hashů obsahu složek pro vybranou skupinu.
+        Tato metoda vyzve k výpočtu hashů pro všechny projekty ve vybrané skupině.
         """
-        from PySide6.QtWidgets import QApplication
+        # Získáme aktuálně vybranou položku ve stromu
+        selected_items = self.groups_tree.selectedItems()
+        if not selected_items:
+            self.status_label.setText("Vyberte skupinu projektů pro výpočet hashů.")
+            return
         
-        # Získáme všechny projekty ve skupině pro hledání shod
+        # Vybereme první vybranou položku
+        selected_item = selected_items[0]
+        
+        # Pokud je vybrán projekt, vybereme jeho rodiče (skupinu)
+        if selected_item.parent():
+            group_item = selected_item.parent()
+        else:
+            group_item = selected_item
+        
+        # Načteme všechny projekty ve skupině
         projects = []
         for i in range(group_item.childCount()):
             child_item = group_item.child(i)
@@ -984,97 +946,78 @@ class ProjectListView(QWidget):
             if project:
                 projects.append((child_item, project))
         
-        # Pro každý projekt ve skupině
+        # Spustíme výpočet hashů pro všechny projekty ve skupině
+        self.status_label.setText("Výpočet hashů obsahu složek...")
+        calculate_folder_hashes(group_item, self.status_label, self._update_coloring_after_calculation)
+        self.status_label.setText("Výpočet hashů dokončen.")
+
+    def calculate_last_file_modified_action(self):
+        """
+        Akce pro výpočet datumu poslední úpravy souborů pro vybranou skupinu.
+        Tato metoda vyzve k výpočtu datumu poslední úpravy souborů
+        pro všechny projekty ve vybrané skupině.
+        """
+        # Získáme aktuálně vybranou položku ve stromu
+        selected_items = self.groups_tree.selectedItems()
+        if not selected_items:
+            self.status_label.setText("Vyberte skupinu projektů pro výpočet datumů.")
+            return
+        
+        # Vybereme první vybranou položku
+        selected_item = selected_items[0]
+        
+        # Pokud je vybrán projekt, vybereme jeho rodiče (skupinu)
+        if selected_item.parent():
+            group_item = selected_item.parent()
+        else:
+            group_item = selected_item
+        
+        # Načteme všechny projekty ve skupině
+        projects = []
         for i in range(group_item.childCount()):
             child_item = group_item.child(i)
             project = child_item.data(0, Qt.UserRole)
-            
-            if project and hasattr(project, 'path'):
-                self.calculate_project_hash(child_item, project)
+            if project:
+                projects.append((child_item, project))
         
-        # Po výpočtu všech hashů provedeme obarvení projektů se stejnými hodnotami
-        self._update_coloring_after_calculation(projects)
-        
-        # Aktualizace informace po dokončení
-        self.status_label.setText(f"Hashe byly vypočítány pro všechny projekty ve skupině")
-        
-        # Signál pro aktualizaci projektů v modelu
-        from controller.app_controller import AppController
-        if hasattr(AppController, 'update_projects_with_real_data'):
-            AppController.update_projects_with_real_data()
-    
-    def _update_coloring_after_calculation(self, projects):
+        # Spustíme výpočet datumů poslední úpravy souborů pro všechny projekty ve skupině
+        self.status_label.setText("Výpočet datumů poslední úpravy souborů...")
+        calculate_last_file_modified(group_item, self.status_label)
+        self.status_label.setText("Výpočet datumů dokončen.")
+
+    def calculate_all_data_action(self):
         """
-        Aktualizuje barevné zvýraznění projektů po výpočtu hodnot.
-        
-        Args:
-            projects: Seznam dvojic (item, project) pro projekty ve skupině
+        Akce pro výpočet všech údajů pro vybranou skupinu.
+        Tato metoda vyzve k výpočtu všech údajů
+        pro všechny projekty ve vybrané skupině.
         """
-        # Definice sloupců pro jednotlivé hodnoty
-        hash_column = 6      # Sloupec pro hash
-        size_column = 2      # Sloupec pro velikost
-        file_count_column = 5  # Sloupec pro počet souborů
-        last_file_mod_column = 7  # Sloupec pro poslední změnu souboru
+        # Získáme aktuálně vybranou položku ve stromu
+        selected_items = self.groups_tree.selectedItems()
+        if not selected_items:
+            self.status_label.setText("Vyberte skupinu projektů pro výpočet všech údajů.")
+            return
         
-        # Vytvoříme skupiny projektů podle jejich hashů
-        hash_groups = {}
-        for item, project in projects:
-            if hasattr(project, 'folder_hash') and project.folder_hash:
-                if project.folder_hash in hash_groups:
-                    hash_groups[project.folder_hash].append((item, project))
-                else:
-                    hash_groups[project.folder_hash] = [(item, project)]
+        # Vybereme první vybranou položku
+        selected_item = selected_items[0]
         
-        # Obarvíme buňky s hashem pro projekty se shodným hashem (sytá zelená)
-        for hash_value, items_projects in hash_groups.items():
-            if len(items_projects) > 1:  # Pouze pokud existuje více projektů se stejným hashem
-                for item, _ in items_projects:
-                    item.setBackground(hash_column, QColor("#88FF88"))  # Sytější zelená
+        # Pokud je vybrán projekt, vybereme jeho rodiče (skupinu)
+        if selected_item.parent():
+            group_item = selected_item.parent()
+        else:
+            group_item = selected_item
         
-        # Vytvoříme skupiny projektů podle jejich skutečných velikostí
-        size_groups = {}
-        for item, project in projects:
-            if hasattr(project, 'real_size') and project.real_size is not None:
-                if project.real_size in size_groups:
-                    size_groups[project.real_size].append((item, project))
-                else:
-                    size_groups[project.real_size] = [(item, project)]
+        # Načteme všechny projekty ve skupině
+        projects = []
+        for i in range(group_item.childCount()):
+            child_item = group_item.child(i)
+            project = child_item.data(0, Qt.UserRole)
+            if project:
+                projects.append((child_item, project))
         
-        # Obarvíme buňky s velikostí pro projekty se stejnou skutečnou velikostí (oranžová)
-        for size, items_projects in size_groups.items():
-            if len(items_projects) > 1:  # Pouze pokud existuje více projektů se stejnou velikostí
-                for item, _ in items_projects:
-                    item.setBackground(size_column, QColor("#FFDDAA"))  # Světle oranžová
-        
-        # Vytvoříme skupiny projektů podle jejich skutečného počtu souborů
-        file_count_groups = {}
-        for item, project in projects:
-            if hasattr(project, 'real_file_count') and project.real_file_count is not None:
-                if project.real_file_count in file_count_groups:
-                    file_count_groups[project.real_file_count].append((item, project))
-                else:
-                    file_count_groups[project.real_file_count] = [(item, project)]
-        
-        # Obarvíme buňky s počtem souborů pro projekty se stejným počtem souborů (modrá)
-        for count, items_projects in file_count_groups.items():
-            if len(items_projects) > 1:  # Pouze pokud existuje více projektů se stejným počtem souborů
-                for item, _ in items_projects:
-                    item.setBackground(file_count_column, QColor("#AADDFF"))  # Světle modrá
-        
-        # Vytvoříme skupiny projektů podle data poslední změny souboru
-        last_mod_groups = {}
-        for item, project in projects:
-            if hasattr(project, 'last_file_modified') and project.last_file_modified is not None:
-                if project.last_file_modified in last_mod_groups:
-                    last_mod_groups[project.last_file_modified].append((item, project))
-                else:
-                    last_mod_groups[project.last_file_modified] = [(item, project)]
-        
-        # Obarvíme buňky s datem poslední změny souboru pro projekty se stejným datem (fialová)
-        for last_mod, items_projects in last_mod_groups.items():
-            if len(items_projects) > 1:  # Pouze pokud existuje více projektů se stejným datem poslední změny
-                for item, _ in items_projects:
-                    item.setBackground(last_file_mod_column, QColor("#E6CCFF"))  # Světle fialová
+        # Spustíme výpočet všech údajů pro všechny projekty ve skupině
+        self.status_label.setText("Výpočet všech údajů pro skupinu projektů...")
+        self.calculate_all_data(group_item)
+        self.status_label.setText("Výpočet všech údajů dokončen.")
 
     def calculate_project_hash(self, item, project):
         """
@@ -1154,10 +1097,13 @@ class ProjectListView(QWidget):
         Returns:
             QWidget: Widget s legendou barev
         """
+        # Získání aktuálního tématu z ThemeManager
+        theme = ThemeManager.get_theme(ThemeManager.load_current_theme())
+        
         # Vytvoření rámečku pro legendu
         legend_frame = QFrame()
+        legend_frame.setObjectName("color_legend")  # Pro speciální stylování v CSS
         legend_frame.setFrameShape(QFrame.StyledPanel)
-        legend_frame.setStyleSheet("background-color: white; border: 1px solid lightgray;")
         
         # Layout pro legendu
         legend_layout = QHBoxLayout(legend_frame)
@@ -1165,18 +1111,18 @@ class ProjectListView(QWidget):
         
         # Přidání popisků s barevnými čtverečky
         colors = [
-            ("Celý řádek zeleně - podobné projekty", "#AAFFAA"),
-            ("Zelená buňka - stejný hash", "#88FF88"),
-            ("Oranžová buňka - stejná velikost", "#FFDDAA"),
-            ("Modrá buňka - stejný počet souborů", "#AADDFF"),
-            ("Fialová buňka - stejné datum změny souboru", "#E6CCFF")
+            ("Celý řádek zeleně - podobné projekty", theme["similar_color"]),
+            ("Zelená buňka - stejný hash", theme["same_hash_color"]),
+            ("Oranžová buňka - stejná velikost", theme["same_size_color"]),
+            ("Modrá buňka - stejný počet souborů", theme["same_files_color"]),
+            ("Fialová buňka - stejné datum změny souboru", theme["same_date_color"])
         ]
         
         for text, color in colors:
             # Barevný čtvereček
             color_box = QFrame()
             color_box.setFixedSize(16, 16)
-            color_box.setStyleSheet(f"background-color: {color}; border: 1px solid gray;")
+            color_box.setStyleSheet(f"background-color: {color}; border: 1px solid {theme['highlight_background']};")
             
             # Popisek
             label = QLabel(text)
@@ -1193,50 +1139,8 @@ class ProjectListView(QWidget):
         # Přidání pružiny, aby se barevné boxy zarovnaly doleva
         legend_layout.addStretch(1)
         
-        return legend_frame 
+        return legend_frame
 
-    def calculate_last_file_modified(self, group_item):
-        """
-        Zjistí datum poslední úpravy libovolného souboru v projektech ve skupině.
-        
-        Args:
-            group_item: Položka skupiny ve stromu
-        """
-        from PySide6.QtWidgets import QApplication
-        
-        # Nastavení sloupce pro poslední změnu souboru
-        last_file_mod_column = 7
-        
-        # Získáme všechny projekty ve skupině
-        projects = []
-        for i in range(group_item.childCount()):
-            child_item = group_item.child(i)
-            project = child_item.data(0, Qt.UserRole)
-            if project:
-                projects.append((child_item, project))
-        
-        # Pro každý projekt ve skupině
-        for i in range(group_item.childCount()):
-            # Nastavení kurzoru na čekání
-            QApplication.setOverrideCursor(Qt.WaitCursor)
-            
-            child_item = group_item.child(i)
-            project = child_item.data(0, Qt.UserRole)
-            
-            if project and hasattr(project, 'path'):
-                self.calculate_project_last_modified(child_item, project)
-                
-            # Obnovení normálního kurzoru
-            QApplication.restoreOverrideCursor()
-        
-        # Aktualizace informace po dokončení
-        self.status_label.setText(f"Data o poslední změně souborů načtena pro všechny projekty ve skupině")
-        
-        # Signál pro aktualizaci projektů v modelu
-        from controller.app_controller import AppController
-        if hasattr(AppController, 'update_projects_with_real_data'):
-            AppController.update_projects_with_real_data()
-    
     def calculate_project_last_modified(self, item, project):
         """
         Zjistí datum poslední úpravy libovolného souboru v projektu.
@@ -1272,3 +1176,281 @@ class ProjectListView(QWidget):
         
         # Obnovení normálního kurzoru
         QApplication.restoreOverrideCursor() 
+
+    def show_similar_projects(self, projects, groups):
+        """
+        Zobrazí skupiny podobných projektů.
+        
+        Args:
+            projects (list): Seznam projektů
+            groups (list): Seznam skupin podobných projektů
+        """
+        # Získání aktuálního tématu z ThemeManager
+        theme = ThemeManager.get_theme(ThemeManager.load_current_theme())
+        
+        # Uložení skupin pro pozdější použití (např. pro kontextové menu)
+        self.duplicate_groups = groups
+        
+        # Vyčištění stromu
+        self.groups_tree.clear()
+        
+        # Počítadlo celkového počtu podobných projektů
+        total_duplicates = 0
+        
+        # Nastavení resizeMode na první spuštění, aby byly sloupce správně zarovnány
+        for i in range(len(GROUP_COLUMNS)):
+            self.groups_tree.header().setSectionResizeMode(i, QHeaderView.ResizeToContents)
+        
+        # Přidání skupin do stromu
+        for group_id, group in enumerate(groups):
+            # Vytvoření položky pro skupinu
+            group_item = QTreeWidgetItem(self.groups_tree)
+            
+            # Nastavení textu pro název skupiny (první sloupec)
+            group_item.setText(0, f"Skupina {group_id + 1}")
+            
+            # Zvýraznění celé skupiny pomocí barvy na pozadí
+            for col in range(len(GROUP_COLUMNS)):
+                group_item.setBackground(col, QColor(theme["tree_header_background"]))
+            
+            # Sečtení počtu projektů v této skupině
+            group_size = len(group)
+            total_duplicates += group_size
+            
+            # Přidání informací o projektech ve skupině
+            for idx, project_idx in enumerate(group):
+                project = projects[project_idx]
+                
+                # Vytvoření podpoložky pro projekt ve skupině
+                project_item = QTreeWidgetItem(group_item)
+                
+                # Nastavení textu pro jednotlivé sloupce
+                basename = os.path.basename(project.path)
+                project_item.setText(0, basename if basename else project.name)
+                project_item.setText(1, project.path)
+                project_item.setText(2, project.get_formatted_size())
+                project_item.setText(3, project.get_formatted_last_modified())
+                
+                # Pokud máme informace o podobnosti, zobrazíme je
+                if hasattr(project, 'similarity') and project.similarity is not None:
+                    similarity_percent = f"{project.similarity * 100:.0f}%"
+                    project_item.setText(4, similarity_percent)
+                
+                # Pokud máme informaci o počtu souborů, zobrazíme ji
+                if hasattr(project, 'real_file_count') and project.real_file_count is not None:
+                    project_item.setText(5, str(project.real_file_count))
+                
+                # Pokud máme informaci o hashi, zobrazíme ji
+                if hasattr(project, 'folder_hash') and project.folder_hash is not None:
+                    project_item.setText(6, project.folder_hash[:8])  # Zkrácení hashe pro lepší zobrazení
+                
+                # Pokud máme informaci o poslední změně souboru, zobrazíme ji
+                if hasattr(project, 'last_file_modified') and project.last_file_modified is not None:
+                    project_item.setText(7, project.get_formatted_last_file_modified())
+                
+                # Zvýraznění řádku projektu podobného ostatním v této skupině
+                for col in range(len(GROUP_COLUMNS)):
+                    project_item.setBackground(col, QColor(theme["similar_color"]))
+                
+                # Uložíme projekt do dat položky
+                project_item.setData(0, Qt.UserRole, project)
+                
+                # Nastavení identifikátoru skupiny
+                project_item.setData(0, Qt.UserRole + 1, group_id)
+        
+        # Přidání všech projektů do samostatné skupiny
+        self._add_all_projects_group(projects)
+        
+        # Obnovíme přirozené nastavení šířky sloupců po naplnění daty
+        self._update_column_widths()
+        
+        # Rozbalení všech skupin
+        self.groups_tree.expandAll()
+        
+        # Aktualizace stavového řádku
+        self.status_label.setText(f"Nalezeno {len(projects)} projektů, {len(groups)} " +
+                                  f"skupin podobných projektů s celkem {total_duplicates} potenciálními duplicitami.")
+
+    def _add_all_projects_group(self, projects):
+        """
+        Přidá skupinu se všemi projekty do stromu.
+        
+        Args:
+            projects (list): Seznam všech projektů
+        """
+        # Získání aktuálního tématu z ThemeManager
+        theme = ThemeManager.get_theme(ThemeManager.load_current_theme())
+        
+        # Vytvoření skupiny pro všechny projekty
+        all_projects_group = QTreeWidgetItem(self.groups_tree)
+        all_projects_group.setText(0, "Všechny projekty")
+        
+        # Nastavení pozadí pro všechny sloupce
+        for col in range(len(GROUP_COLUMNS)):
+            all_projects_group.setBackground(col, QColor(theme["tree_header_background"]))
+        
+        # Zjištění indexů sloupců pro specifické údaje
+        hash_column = GROUP_COLUMNS.index("Hash") if "Hash" in GROUP_COLUMNS else -1
+        size_column = GROUP_COLUMNS.index("Velikost") if "Velikost" in GROUP_COLUMNS else -1
+        file_count_column = GROUP_COLUMNS.index("Počet souborů") if "Počet souborů" in GROUP_COLUMNS else -1
+        last_mod_column = GROUP_COLUMNS.index("Poslední změna souboru") if "Poslední změna souboru" in GROUP_COLUMNS else -1
+        
+        # Vytvoření slovníků pro seskupování projektů podle různých kritérií
+        hash_groups = {}
+        size_groups = {}
+        file_count_groups = {}
+        last_mod_groups = {}
+        
+        # Naplnění slovníků podle různých kritérií
+        for project in projects:
+            # Seskupení podle hashů
+            if hasattr(project, 'folder_hash') and project.folder_hash:
+                if project.folder_hash in hash_groups:
+                    hash_groups[project.folder_hash].append(project)
+                else:
+                    hash_groups[project.folder_hash] = [project]
+            
+            # Seskupení podle velikosti
+            if hasattr(project, 'real_size') and project.real_size is not None:
+                if project.real_size in size_groups:
+                    size_groups[project.real_size].append(project)
+                else:
+                    size_groups[project.real_size] = [project]
+            
+            # Seskupení podle počtu souborů
+            if hasattr(project, 'real_file_count') and project.real_file_count is not None:
+                if project.real_file_count in file_count_groups:
+                    file_count_groups[project.real_file_count].append(project)
+                else:
+                    file_count_groups[project.real_file_count] = [project]
+            
+            # Seskupení podle data poslední změny souboru
+            if hasattr(project, 'last_file_modified') and project.last_file_modified is not None:
+                if project.last_file_modified in last_mod_groups:
+                    last_mod_groups[project.last_file_modified].append(project)
+                else:
+                    last_mod_groups[project.last_file_modified] = [project]
+        
+        # Přidáme všechny projekty do skupiny
+        for project in projects:
+            project_item = QTreeWidgetItem(all_projects_group)
+            
+            # Nastavíme data pro každý sloupec
+            basename = os.path.basename(project.path)
+            project_item.setText(0, basename if basename else project.name)
+            project_item.setText(1, project.path)
+            project_item.setText(2, project.get_formatted_size())
+            project_item.setText(3, project.get_formatted_last_modified())
+            
+            # Uložíme projekt do dat položky
+            project_item.setData(0, Qt.UserRole, project)
+            
+            # Obarvíme buňku s hashem pro projekty se shodným hashem
+            if hasattr(project, 'folder_hash') and project.folder_hash:
+                # Pokud existují alespoň dva projekty se stejným hashem
+                if project.folder_hash in hash_groups and len(hash_groups[project.folder_hash]) > 1:
+                    project_item.setBackground(hash_column, QColor(theme["same_hash_color"]))
+            
+            # Obarvíme buňku s velikostí pro projekty se stejnou skutečnou velikostí
+            if hasattr(project, 'real_size') and project.real_size is not None:
+                if project.real_size in size_groups and len(size_groups[project.real_size]) > 1:
+                    project_item.setBackground(size_column, QColor(theme["same_size_color"]))
+            
+            # Obarvíme buňku s počtem souborů pro projekty se stejným počtem souborů
+            if hasattr(project, 'real_file_count') and project.real_file_count is not None:
+                if project.real_file_count in file_count_groups and len(file_count_groups[project.real_file_count]) > 1:
+                    project_item.setBackground(file_count_column, QColor(theme["same_files_color"]))
+            
+            # Obarvíme buňku s datem poslední změny souboru pro projekty se stejným datem
+            if hasattr(project, 'last_file_modified') and project.last_file_modified is not None:
+                if project.last_file_modified in last_mod_groups and len(last_mod_groups[project.last_file_modified]) > 1:
+                    project_item.setBackground(last_mod_column, QColor(theme["same_date_color"]))
+            
+            # Přidáme datum poslední úpravy souboru
+            try:
+                project_item.setText(last_file_mod_column, project.get_formatted_last_file_modified())
+            except Exception as e:
+                project_item.setText(last_file_mod_column, "-")
+        
+        # Rozbalíme skupinu
+        self.groups_tree.expandItem(all_projects_group)
+        
+        # Aktualizujeme informační štítek
+        self.status_label.setText(f"Nalezeno {len(projects)} projektů")
+
+    # Přidám metodu pro aktualizaci obarvení po výpočtu
+    def _update_coloring_after_calculation(self, projects):
+        """
+        Aktualizuje obarvení projektů po výpočtu jejich skutečné velikosti, počtu souborů a hashů.
+        
+        Args:
+            projects (list): Seznam dvojic (item, projekt)
+        """
+        # Získání aktuálního tématu z ThemeManager
+        theme = ThemeManager.get_theme(ThemeManager.load_current_theme())
+        
+        # Zjištění indexů sloupců pro specifické údaje
+        hash_column = GROUP_COLUMNS.index("Hash") if "Hash" in GROUP_COLUMNS else -1
+        size_column = GROUP_COLUMNS.index("Velikost") if "Velikost" in GROUP_COLUMNS else -1
+        file_count_column = GROUP_COLUMNS.index("Počet souborů") if "Počet souborů" in GROUP_COLUMNS else -1
+        last_mod_column = GROUP_COLUMNS.index("Poslední změna souboru") if "Poslední změna souboru" in GROUP_COLUMNS else -1
+        
+        # Vytvoření slovníků pro seskupování projektů podle různých kritérií
+        hash_groups = {}
+        size_groups = {}
+        file_count_groups = {}
+        last_mod_groups = {}
+        
+        # Naplnění slovníků podle různých kritérií
+        for item, project in projects:
+            # Seskupení podle hashů
+            if hasattr(project, 'folder_hash') and project.folder_hash is not None:
+                if project.folder_hash in hash_groups:
+                    hash_groups[project.folder_hash].append((item, project))
+                else:
+                    hash_groups[project.folder_hash] = [(item, project)]
+            
+            # Seskupení podle velikosti
+            if hasattr(project, 'real_size') and project.real_size is not None:
+                if project.real_size in size_groups:
+                    size_groups[project.real_size].append((item, project))
+                else:
+                    size_groups[project.real_size] = [(item, project)]
+            
+            # Seskupení podle počtu souborů
+            if hasattr(project, 'real_file_count') and project.real_file_count is not None:
+                if project.real_file_count in file_count_groups:
+                    file_count_groups[project.real_file_count].append((item, project))
+                else:
+                    file_count_groups[project.real_file_count] = [(item, project)]
+            
+            # Seskupení podle data poslední změny souboru
+            if hasattr(project, 'last_file_modified') and project.last_file_modified is not None:
+                if project.last_file_modified in last_mod_groups:
+                    last_mod_groups[project.last_file_modified].append((item, project))
+                else:
+                    last_mod_groups[project.last_file_modified] = [(item, project)]
+        
+        # Obarvíme buňky s hashem pro projekty se shodným hashem (zelená)
+        for hash_val, items_projects in hash_groups.items():
+            if len(items_projects) > 1:  # Pouze pokud existuje více projektů se stejným hashem
+                for item, _ in items_projects:
+                    item.setBackground(hash_column, QColor(theme["same_hash_color"]))
+        
+        # Obarvíme buňky s velikostí pro projekty se stejnou skutečnou velikostí (oranžová)
+        for size, items_projects in size_groups.items():
+            if len(items_projects) > 1:  # Pouze pokud existuje více projektů se stejnou velikostí
+                for item, _ in items_projects:
+                    item.setBackground(size_column, QColor(theme["same_size_color"]))
+        
+        # Obarvíme buňky s počtem souborů pro projekty se stejným počtem souborů (modrá)
+        for count, items_projects in file_count_groups.items():
+            if len(items_projects) > 1:  # Pouze pokud existuje více projektů se stejným počtem souborů
+                for item, _ in items_projects:
+                    item.setBackground(file_count_column, QColor(theme["same_files_color"]))
+        
+        # Obarvíme buňky s datem poslední změny souboru pro projekty se stejným datem (fialová)
+        for date, items_projects in last_mod_groups.items():
+            if len(items_projects) > 1:  # Pouze pokud existuje více projektů se stejným datem
+                for item, _ in items_projects:
+                    item.setBackground(last_mod_column, QColor(theme["same_date_color"]))
